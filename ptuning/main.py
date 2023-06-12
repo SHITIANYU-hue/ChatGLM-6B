@@ -201,9 +201,10 @@ def main():
                     prompt = ""
                     history = examples[history_column][i]
                     for turn_idx, (old_query, response) in enumerate(history):
-                        prompt += "[Round {}]\n问：{}\n答：{}\n".format(turn_idx, old_query, response)
-                    prompt += "[Round {}]\n问：{}\n答：".format(len(history), query)
-
+                        prompt += "[Round {}]\n问：{}\n用可爱的风格回答：{}\n".format(turn_idx, old_query, response)
+                    prompt += "[Round {}]\n问：{}\n用可爱的风格回答：".format(len(history), query)
+                    #     prompt += "[Round {}]\n网友说：{}\n假想你是一个杠精，用怼人,低情商的风格回答到：{}\n".format(turn_idx, old_query, response)
+                    # prompt += "[Round {}]\n网友说：{}\n假想你是一个杠精，用怼人,低情商的风格回答到：".format(len(history), query)
                 prompt = prefix + prompt
                 a_ids = tokenizer.encode(text=prompt, add_special_tokens=False)
                 b_ids = tokenizer.encode(text=answer, add_special_tokens=False)

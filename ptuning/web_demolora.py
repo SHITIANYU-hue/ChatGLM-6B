@@ -15,6 +15,7 @@ from transformers import (
     Seq2SeqTrainingArguments,
     set_seed,
 )
+from peft import get_peft_model, LoraConfig, TaskType
 
 from arguments import ModelArguments, DataTrainingArguments
 
@@ -85,16 +86,16 @@ def predict(input, chatbot, max_length, top_p, temperature, history):
 
     def generate_prompt(input):
         if input!=None:
-            return f"""网友说：{input},用可爱的风格回复道："""
+            return f"""用萌萌的风格，并且夹杂着颜文字，回复该输入:{input}"""
         else:
-            return f"""网友说：{input},用可爱的风格回复道："""
+            return f"""用萌萌的风格，并且夹杂着颜文字，回复该输入:{input}"""
 
     input_=generate_prompt(input)
     print('previous input',input)
     print('after input',input_)
     for response, history in model.stream_chat(tokenizer, input_, history, max_length=max_length, top_p=top_p,
-                                               temperature=temperature):
-        chatbot[-1] = (parse_text(input), parse_text(response))       
+                                               temperature=temperature,repetition_penalty=1.3):
+        chatbot[-1] = (parse_text(input), parse_text(response))
         print('chatbot',chatbot)
         yield chatbot, history
 def reset_user_input():
@@ -152,15 +153,26 @@ def main():
     config.pre_seq_len = model_args.pre_seq_len
     config.prefix_projection = model_args.prefix_projection
 
-    if model_args.ptuning_checkpoint is not None:
-        print(f"Loading prefix_encoder weight from {model_args.ptuning_checkpoint}")
+    if model_args.lora_checkpoint is not None:
+        print(f"Loading lora weight from {model_args.lora_checkpoint}")
         model = AutoModel.from_pretrained(model_args.model_name_or_path, config=config, trust_remote_code=True)
-        prefix_state_dict = torch.load(os.path.join(model_args.ptuning_checkpoint, "pytorch_model.bin"))
-        new_prefix_state_dict = {}
-        for k, v in prefix_state_dict.items():
-            if k.startswith("transformer.prefix_encoder."):
-                new_prefix_state_dict[k[len("transformer.prefix_encoder."):]] = v
-        model.transformer.prefix_encoder.load_state_dict(new_prefix_state_dict)
+        LOAD_8BIT = True
+
+        LORA_R = 8
+        LORA_ALPHA = 16
+        LORA_DROPOUT = 0.05
+        TARGET_MODULES = ['query_key_value']
+        peft_config = LoraConfig(
+            r=LORA_R,
+            lora_alpha=LORA_ALPHA,
+            target_modules=TARGET_MODULES,
+            lora_dropout=LORA_DROPOUT,
+            bias="none",
+            task_type="CAUSAL_LM",
+        )
+        peft_path =os.path.join(model_args.lora_checkpoint, "adapter_model.bin")
+        model = get_peft_model(model, peft_config)
+        model.load_state_dict(torch.load(peft_path), strict=False)
     else:
         model = AutoModel.from_pretrained(model_args.model_name_or_path, config=config, trust_remote_code=True)
 
