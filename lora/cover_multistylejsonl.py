@@ -23,8 +23,8 @@ def format_example_multi(example: dict,style:str) -> dict:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data_path", type=str, default="/home/amax/code/ChatGLM-6B/ptuning/character/multi2/data_multi.json")
-    parser.add_argument("--save_path", type=str, default="/home/amax/code/ChatGLM-6B/ptuning/character/multi2/data_multi.jsonl")
+    parser.add_argument("--data_path", type=str, default="/home/tianyu/code/ChatGLM-6B/ptuning/character/multinew/data_multi.json")
+    parser.add_argument("--save_path", type=str, default="/home/tianyu/code/ChatGLM-6B/ptuning/character/multinew/data_multi.jsonl")
 
     args = parser.parse_args()
     with open(args.data_path) as f:
