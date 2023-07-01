@@ -72,11 +72,24 @@ def main():
     finetune_args, training_args = HfArgumentParser(
         (FinetuneArguments, TrainingArguments)
     ).parse_args_into_dataclasses()
+    from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
-    # init model
+    quantization_config = BitsAndBytesConfig(llm_int8_enable_fp32_cpu_offload=True)
+
+
+
+    # # init model ## this is for device: Tesla 29c
+    # model = AutoModel.from_pretrained(
+    #     "THUDM/chatglm-6b", load_in_8bit=True, trust_remote_code=True, device_map="auto"
+    # )
+
+    # init model ## this is for device: Gforce p8, 
     model = AutoModel.from_pretrained(
-        "THUDM/chatglm-6b", load_in_8bit=True, trust_remote_code=True, device_map="auto"
-    )
+        "THUDM/chatglm-6b", load_in_8bit=False, trust_remote_code=True, device_map="auto"
+    ).half().cuda()
+
+
+
     model.gradient_checkpointing_enable()
     model.enable_input_require_grads()
     model.is_parallelizable = True
